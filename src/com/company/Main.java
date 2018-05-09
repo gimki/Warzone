@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -134,7 +135,7 @@ public class Main {
                     .withMessageBody("For Image Transformation!")
                     .withQueueUrl(sqsQueueURL));
                 try {
-                    TimeUnit.MILLISECONDS.sleep(randomGenerator.nextInt(20000));
+                    TimeUnit.MILLISECONDS.sleep(30);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

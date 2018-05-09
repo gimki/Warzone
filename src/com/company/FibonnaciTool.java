@@ -44,7 +44,7 @@ public class FibonnaciTool {
                             .withString("fibonnaci", fib(order).toString()));
                         order = order.add(BigInteger.ONE);
                         try {
-                            TimeUnit.MILLISECONDS.sleep(100);
+                            TimeUnit.SECONDS.sleep(5);
                         } catch (InterruptedException e) {
                             logger.warning("Interrupted during prime calculation.");
                         }

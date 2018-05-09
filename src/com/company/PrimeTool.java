@@ -62,6 +62,7 @@ public class PrimeTool {
 
             BigInteger previousPrime = pickUpFrom(table);
             while (true) {
+                TimeUnit.SECONDS.sleep(5);
                 BigInteger nextPrime = findNextPrime(previousPrime);
                 table.putItem(new Item().withString("key-not-used","1")
                     .withString("prime", nextPrime.toString()));
