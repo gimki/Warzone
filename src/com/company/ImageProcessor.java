@@ -4,10 +4,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,10 +23,8 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.util.IOUtils;
 
-
 public class ImageProcessor {
 
-    private static final Logger logger = LoggerTool.setupLogger("ImageProcessor");
     private static final String bucket = "dummy-application";
     private static final String bwFolder = "bw-images";
     private static final String uprightFolder = "upright-images";
@@ -38,6 +34,8 @@ public class ImageProcessor {
 
     private static String sqsQueueURL = "";
 
+    // Initiate new logger for every ImageProcessor instance; Rule Recreation of Logger
+    private final Logger logger = LoggerTool.setupLogger("ImageProcessor");
     private final ImageEditor ie = new ImageEditor();
     private final AmazonSQS amazonSQS = AmazonSQSClientBuilder.defaultClient();
     private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
@@ -81,15 +79,15 @@ public class ImageProcessor {
                     }
 
                     uploadBWImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(3);
                     uploadUprightImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(3);
                     uploadGreyImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(3);
                     uploadBrightenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(3);
                     uploadDarkenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.SECONDS.sleep(3);
 
                     deleteFile(outputFilePath);
 

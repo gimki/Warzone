@@ -50,8 +50,11 @@ public class Main {
             .getValue();
 
         ExecutorService executorService = Executors.newFixedThreadPool(4);
-        ImageProcessor imageProcessor = new ImageProcessor(sqsQueueURL);
+        ImageProcessor imageProcessor1 = new ImageProcessor(sqsQueueURL);
+        ImageProcessor imageProcessor2 = new ImageProcessor(sqsQueueURL);
+        ImageProcessor imageProcessor3 = new ImageProcessor(sqsQueueURL);
 
+        /*
         executorService.submit(()-> {
             while(true) {
                 PrimeTool.populatePrimeUpTo(new BigInteger("1000000000"));
@@ -72,11 +75,14 @@ public class Main {
             }
         });
 
+        */
         executorService.submit(Main::createMessageToImageQueue);
 
-        executorService.submit(()->{
-            imageProcessor.parallelStart(3);
-        });
+        executorService.submit(imageProcessor1::start);
+
+        executorService.submit(imageProcessor2::start);
+
+        executorService.submit(imageProcessor3::start);
 
         try {
             logger.info("Running for 100 days!");
