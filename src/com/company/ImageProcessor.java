@@ -79,15 +79,15 @@ public class ImageProcessor {
                     }
 
                     uploadBWImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(2);
                     uploadUprightImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(2);
                     uploadGreyImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(2);
                     uploadBrightenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(2);
                     uploadDarkenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(2);
 
                     deleteFile(outputFilePath);
 

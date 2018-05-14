@@ -49,10 +49,13 @@ public class Main {
             .getParameter()
             .getValue();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        ExecutorService executorService = Executors.newFixedThreadPool(6);
         ImageProcessor imageProcessor1 = new ImageProcessor(sqsQueueURL);
         ImageProcessor imageProcessor2 = new ImageProcessor(sqsQueueURL);
         ImageProcessor imageProcessor3 = new ImageProcessor(sqsQueueURL);
+        ImageProcessor imageProcessor4 = new ImageProcessor(sqsQueueURL);
+        ImageProcessor imageProcessor5 = new ImageProcessor(sqsQueueURL);
+
 
         /*
         executorService.submit(()-> {
@@ -83,6 +86,10 @@ public class Main {
         executorService.submit(imageProcessor2::start);
 
         executorService.submit(imageProcessor3::start);
+
+        executorService.submit(imageProcessor4::start);
+
+        executorService.submit(imageProcessor5::start);
 
         try {
             logger.info("Running for 100 days!");
