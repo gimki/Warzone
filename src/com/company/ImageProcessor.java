@@ -31,11 +31,11 @@ import com.amazonaws.util.IOUtils;
 public class ImageProcessor {
 
     private static final String bucket = "dummy-application";
-    private static final String bwFolder = "bw-images";
-    private static final String uprightFolder = "upright-images";
-    private static final String greyFolder = "grey-images";
-    private static final String darkenFolder = "darken-images";
-    private static final String brightenFolder = "brighten-images";
+    private static final String bwFolder = "bw-images/";
+    private static final String uprightFolder = "upright-images/";
+    private static final String greyFolder = "grey-images/";
+    private static final String darkenFolder = "darken-images/";
+    private static final String brightenFolder = "brighten-images/";
 
     private static String sqsQueueURL = "";
 
