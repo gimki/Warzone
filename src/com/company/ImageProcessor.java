@@ -23,6 +23,11 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.util.IOUtils;
 
+/**
+ * This class has deliberately designed to contain the following anti-pattern for testing purposes.
+ *  - Logger is not static, hence, it is created everytime we create a new class.
+ *  - S3Client is not shared across the instance.
+ */
 public class ImageProcessor {
 
     private static final String bucket = "dummy-application";
@@ -34,11 +39,9 @@ public class ImageProcessor {
 
     private static String sqsQueueURL = "";
 
-    // Initiate new logger for every ImageProcessor instance; Rule Recreation of Logger
-    private final Logger logger = LoggerTool.setupLogger("ImageProcessor");
+    private static final Logger logger = LoggerTool.setupLogger("ImageProcessor");
     private final ImageEditor ie = new ImageEditor();
     private final AmazonSQS amazonSQS = AmazonSQSClientBuilder.defaultClient();
-    private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
 
     ImageProcessor(String sqsQueueURL) {
         this.sqsQueueURL = sqsQueueURL;
@@ -67,7 +70,16 @@ public class ImageProcessor {
                 List<Message> messages = amazonSQS
                     .receiveMessage(new ReceiveMessageRequest().withMessageAttributeNames("key").withQueueUrl(sqsQueueURL))
                     .getMessages();
+                AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+
                 for (Message message: messages) {
+
+                    GreyImageProcessor gip = new GreyImageProcessor();
+                    BWImageProcessor bwip = new BWImageProcessor();
+                    UprightImageProcessor uip = new UprightImageProcessor();
+                    BrightenImageProcessor bip = new BrightenImageProcessor();
+                    DarkenImageProcessor dip = new DarkenImageProcessor();
+
                     String imageKey = message.getMessageAttributes().get("key").getStringValue();
                     String imageName = getNameFromKey(imageKey);
                     String outputFilePath = "/tmp/" + Instant.now().toString() + imageName;
@@ -78,16 +90,16 @@ public class ImageProcessor {
                         e.printStackTrace();
                     }
 
-                    uploadBWImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(2);
-                    uploadUprightImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(2);
-                    uploadGreyImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(2);
-                    uploadBrightenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(2);
-                    uploadDarkenImage(outputFilePath, imageName);
-                    TimeUnit.SECONDS.sleep(2);
+                    bwip.uploadBWImage(outputFilePath, imageName);
+                    TimeUnit.SECONDS.sleep(1);
+                    uip.uploadUprightImage(outputFilePath, imageName);
+                    TimeUnit.SECONDS.sleep(1);
+                    gip.uploadGreyImage(outputFilePath, imageName);
+                    TimeUnit.SECONDS.sleep(1);
+                    bip.uploadBrightenImage(outputFilePath, imageName);
+                    TimeUnit.SECONDS.sleep(1);
+                    dip.uploadDarkenImage(outputFilePath, imageName);
+                    TimeUnit.SECONDS.sleep(1);
 
                     deleteFile(outputFilePath);
 
@@ -110,79 +122,117 @@ public class ImageProcessor {
         return keySplit[keySplit.length-1];
     }
 
-    private void uploadGreyImage(String filePath, String uploadFileName) {
-        try {
-            String greyFilePath = "/tmp/grey-" + Instant.now().toString() + uploadFileName;
-            BufferedImage dest = ie.grey(ImageIO.read(new File(filePath)));
-            ImageIO.write(dest,"PNG", new File(greyFilePath));
-            PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
-                greyFolder + uploadFileName + Instant.now().toString(),
-                new File(greyFilePath)));
+    private class GreyImageProcessor {
+        private final Logger logger = LoggerTool.setupLogger("GreyImageProcessor");
+        private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
 
-            res.getContentMd5();
-            deleteFile(greyFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+        private void uploadGreyImage(String filePath, String uploadFileName) {
+            try {
+                String greyFilePath = "/tmp/grey-" + Instant.now().toString() + uploadFileName;
+                BufferedImage dest = ie.grey(ImageIO.read(new File(filePath)));
+                ImageIO.write(dest,"PNG", new File(greyFilePath));
+                PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
+                    greyFolder + uploadFileName + Instant.now().toString(),
+                    new File(greyFilePath)));
+
+                res.getContentMd5();
+                logger.info("Uploaded grey image successfully.");
+                deleteFile(greyFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void uploadUprightImage(String filePath, String uploadFileName) {
-        try {
-            String uprightFilePath = "/tmp/upright-" + Instant.now().toString() + uploadFileName;
-            BufferedImage dest = ie.rotateRight180(ImageIO.read(new File(filePath)));
-            ImageIO.write(dest,"PNG", new File(uprightFilePath));
-            PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
-                uprightFolder + uploadFileName + Instant.now().toString(),
-                new File(uprightFilePath)));
-            res.getContentMd5();
-            deleteFile(uprightFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private class UprightImageProcessor {
+
+        private final Logger logger = LoggerTool.setupLogger("UprightImageProcessor");
+        private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+
+        private void uploadUprightImage(String filePath, String uploadFileName) {
+            try {
+                String uprightFilePath = "/tmp/upright-" + Instant.now().toString() + uploadFileName;
+                BufferedImage dest = ie.rotateRight180(ImageIO.read(new File(filePath)));
+                ImageIO.write(dest,"PNG", new File(uprightFilePath));
+                PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
+                    uprightFolder + uploadFileName + Instant.now().toString(),
+                    new File(uprightFilePath)));
+
+                res.getContentMd5();
+                logger.info("Uploaded upright image successfully.");
+                deleteFile(uprightFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void uploadBWImage(String filePath, String uploadFileName) {
-        try {
-            String bwFilePath = "/tmp/bw-" + Instant.now().toString() + uploadFileName;
-            BufferedImage dest = ie.monochrome(ImageIO.read(new File(filePath)));
-            ImageIO.write(dest,"PNG", new File(bwFilePath));
-            PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
-                bwFolder + uploadFileName + Instant.now().toString(),
-                new File(bwFilePath)));
-            res.getContentMd5();
-            deleteFile(bwFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private class BWImageProcessor {
+
+        private final Logger logger = LoggerTool.setupLogger("BWImageProcessor");
+        private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+
+        private void uploadBWImage(String filePath, String uploadFileName) {
+            try {
+                String bwFilePath = "/tmp/bw-" + Instant.now().toString() + uploadFileName;
+                BufferedImage dest = ie.monochrome(ImageIO.read(new File(filePath)));
+                ImageIO.write(dest,"PNG", new File(bwFilePath));
+                PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
+                    bwFolder + uploadFileName + Instant.now().toString(),
+                    new File(bwFilePath)));
+
+                res.getContentMd5();
+                logger.info("Uploaded black and white image successfully.");
+                deleteFile(bwFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void uploadDarkenImage(String filePath, String uploadFileName) {
-        try {
-            String darkFilePath = "/tmp/dark-" + Instant.now().toString() + uploadFileName;
-            BufferedImage dest = ie.darkenImage(ImageIO.read(new File(filePath)));
-            ImageIO.write(dest,"PNG", new File(darkFilePath));
-            PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
-                darkenFolder + uploadFileName + Instant.now().toString(),
-                new File(darkFilePath)));
-            res.getContentMd5();
-            deleteFile(darkFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private class BrightenImageProcessor {
+
+        private final Logger logger = LoggerTool.setupLogger("BrightenImageProcessor");
+        private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+
+        private void uploadBrightenImage(String filePath, String uploadFileName) {
+            try {
+                String brightFilePath = "/tmp/bright-" + Instant.now().toString() + uploadFileName;
+                BufferedImage dest = ie.brightenImage(ImageIO.read(new File(filePath)));
+                ImageIO.write(dest,"PNG", new File(brightFilePath));
+                PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
+                    brightenFolder + uploadFileName + Instant.now().toString(),
+                    new File(brightFilePath)));
+
+                res.getContentMd5();
+                logger.info("Uploaded brighten image successfully.");
+                deleteFile(brightFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void uploadBrightenImage(String filePath, String uploadFileName) {
-        try {
-            String brightFilePath = "/tmp/bright-" + Instant.now().toString() + uploadFileName;
-            BufferedImage dest = ie.brightenImage(ImageIO.read(new File(filePath)));
-            ImageIO.write(dest,"PNG", new File(brightFilePath));
-            PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
-                brightenFolder + uploadFileName + Instant.now().toString(),
-                new File(brightFilePath)));
-            res.getContentMd5();
-            deleteFile(brightFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private class DarkenImageProcessor {
+
+        private final Logger logger = LoggerTool.setupLogger("DarkenImageProcessor");
+        private final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+
+        private void uploadDarkenImage(String filePath, String uploadFileName) {
+            try {
+                String darkFilePath = "/tmp/dark-" + Instant.now().toString() + uploadFileName;
+                BufferedImage dest = ie.darkenImage(ImageIO.read(new File(filePath)));
+                ImageIO.write(dest,"PNG", new File(darkFilePath));
+                PutObjectResult res = amazonS3.putObject(new PutObjectRequest(bucket,
+                    darkenFolder + uploadFileName + Instant.now().toString(),
+                    new File(darkFilePath)));
+
+                res.getContentMd5();
+                logger.info("Uploaded darken image successfully.");
+                deleteFile(darkFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -191,6 +241,4 @@ public class ImageProcessor {
             logger.warning("Fail to remove file in : " + filePath);
         }
     }
-
-
 }

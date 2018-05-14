@@ -49,13 +49,8 @@ public class Main {
             .getParameter()
             .getValue();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-        ImageProcessor imageProcessor1 = new ImageProcessor(sqsQueueURL);
-        ImageProcessor imageProcessor2 = new ImageProcessor(sqsQueueURL);
-        ImageProcessor imageProcessor3 = new ImageProcessor(sqsQueueURL);
-        ImageProcessor imageProcessor4 = new ImageProcessor(sqsQueueURL);
-        ImageProcessor imageProcessor5 = new ImageProcessor(sqsQueueURL);
-
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        ImageProcessor imageProcessor = new ImageProcessor(sqsQueueURL);
 
         /*
         executorService.submit(()-> {
@@ -81,15 +76,7 @@ public class Main {
         */
         executorService.submit(Main::createMessageToImageQueue);
 
-        executorService.submit(imageProcessor1::start);
-
-        executorService.submit(imageProcessor2::start);
-
-        executorService.submit(imageProcessor3::start);
-
-        executorService.submit(imageProcessor4::start);
-
-        executorService.submit(imageProcessor5::start);
+        executorService.submit(()-> imageProcessor.parallelStart(4));
 
         try {
             logger.info("Running for 100 days!");
@@ -148,7 +135,7 @@ public class Main {
                     .withMessageBody("For Image Transformation!")
                     .withQueueUrl(sqsQueueURL));
                 try {
-                    TimeUnit.MILLISECONDS.sleep(30);
+                    TimeUnit.MILLISECONDS.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
